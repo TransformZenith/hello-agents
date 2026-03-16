@@ -62,44 +62,79 @@ import os
 from tavily import TavilyClient
 
 def get_attraction(city: str, weather: str) -> str:
-    """
-    根据城市和天气，使用Tavily Search API搜索并返回优化后的景点推荐。
-    """
-
-    # 从环境变量或主程序配置中获取API密钥
-    api_key = os.environ.get("TAVILY_API_KEY") # 推荐方式
-    # 或者，我们可以在主循环中传入，如此处代码所示
-
-    if not api_key:
-        return "错误：未配置TAVILY_API_KEY。"
-
-    # 2. 初始化Tavily客户端
-    tavily = TavilyClient(api_key=api_key)
-    
-    # 3. 构造一个精确的查询
-    query = f"'{city}' 在'{weather}'天气下最值得去的旅游景点推荐及理由"
-    
+    print("正在调用本地千问大语言模型...")
     try:
-        # 4. 调用API，include_answer=True会返回一个综合性的回答
-        response = tavily.search(query=query, search_depth="basic", include_answer=True)
+        query = f"'{city}' 在'{weather}'天气下最值得去的旅游景点推荐及理由"
+        url = "http://localhost:11434/api/chat"
+        data = {
+            'model': 'modelscope.cn/Qwen/Qwen3-8B-GGUF:latest',
+            'messages': [
+                {
+                'role': 'user',
+                'content': query
+                }
+            ],
+            'stream': False
+        }
+        # 发起网络请求
+        response = requests.post(url, json=data)
+        # 检查响应状态码是否为200 (成功)
+        response.raise_for_status() 
+        # 解析返回的JSON数据
+        data = response.json()
         
-        # 5. Tavily返回的结果已经非常干净，可以直接使用
-        # response['answer'] 是一个基于所有搜索结果的总结性回答
-        if response.get("answer"):
-            return response["answer"]
-        
-        # 如果没有综合性回答，则格式化原始结果
-        formatted_results = []
-        for result in response.get("results", []):
-            formatted_results.append(f"- {result['title']}: {result['content']}")
-        
-        if not formatted_results:
-             return "抱歉，没有找到相关的旅游景点推荐。"
+        # 提取当前天气状况
+        content = data['message']['content']
+        print("大语言模型响应成功。")
+        return content
+    except requests.exceptions.RequestException as e:
+        # 处理网络错误
+        print(f"调用LLM API时发生错误: {e}")
+        return "错误：调用语言模型服务时出错。"
+    except (KeyError, IndexError) as e:
+        print(f"调用LLM API时发生错误: {e}")
+        return "错误：调用语言模型服务时出错。"
 
-        return "根据搜索，为您找到以下信息：\n" + "\n".join(formatted_results)
 
-    except Exception as e:
-        return f"错误：执行Tavily搜索时出现问题 - {e}"
+
+    # """
+    # 根据城市和天气，使用Tavily Search API搜索并返回优化后的景点推荐。
+    # """
+
+    # # 从环境变量或主程序配置中获取API密钥
+    # api_key = os.environ.get("TAVILY_API_KEY") # 推荐方式
+    # # 或者，我们可以在主循环中传入，如此处代码所示
+
+    # if not api_key:
+    #     return "错误：未配置TAVILY_API_KEY。"
+
+    # # 2. 初始化Tavily客户端
+    # tavily = TavilyClient(api_key=api_key)
+    
+    # # 3. 构造一个精确的查询
+    # query = f"'{city}' 在'{weather}'天气下最值得去的旅游景点推荐及理由"
+    
+    # try:
+    #     # 4. 调用API，include_answer=True会返回一个综合性的回答
+    #     response = tavily.search(query=query, search_depth="basic", include_answer=True)
+        
+    #     # 5. Tavily返回的结果已经非常干净，可以直接使用
+    #     # response['answer'] 是一个基于所有搜索结果的总结性回答
+    #     if response.get("answer"):
+    #         return response["answer"]
+        
+    #     # 如果没有综合性回答，则格式化原始结果
+    #     formatted_results = []
+    #     for result in response.get("results", []):
+    #         formatted_results.append(f"- {result['title']}: {result['content']}")
+        
+    #     if not formatted_results:
+    #          return "抱歉，没有找到相关的旅游景点推荐。"
+
+    #     return "根据搜索，为您找到以下信息：\n" + "\n".join(formatted_results)
+
+    # except Exception as e:
+    #     return f"错误：执行Tavily搜索时出现问题 - {e}"
 
 
 # 将所有工具函数放入一个字典，方便后续调用
@@ -138,6 +173,45 @@ class OpenAICompatibleClient:
             print(f"调用LLM API时发生错误: {e}")
             return "错误：调用语言模型服务时出错。"
 
+    def generateFromQwen(self,prompt:str,system_prompt:str) -> str:
+        print("正在调用本地千问大语言模型...")
+        try:
+            url = "http://localhost:11434/api/chat"
+            data = {
+                'model': 'modelscope.cn/Qwen/Qwen3-8B-GGUF:latest',
+                'messages': [
+                    {
+                    'role': 'user',
+                    'content': prompt
+                    },
+                    {
+                    'role': 'system',
+                    'content': system_prompt
+                    }
+                ],
+                'stream': False
+            }
+            # 发起网络请求
+            response = requests.post(url, json=data)
+            # 检查响应状态码是否为200 (成功)
+            response.raise_for_status() 
+            # 解析返回的JSON数据
+            data = response.json()
+            
+            # 提取当前天气状况
+            content = data['message']['content']
+            print("大语言模型响应成功。")
+            return content
+        except requests.exceptions.RequestException as e:
+            # 处理网络错误
+            print(f"调用LLM API时发生错误: {e}")
+            return "错误：调用语言模型服务时出错。"
+        except (KeyError, IndexError) as e:
+            print(f"调用LLM API时发生错误: {e}")
+            return "错误：调用语言模型服务时出错。"
+
+
+
 import re
 
 # --- 1. 配置LLM客户端 ---
@@ -154,7 +228,7 @@ llm = OpenAICompatibleClient(
 )
 
 # --- 2. 初始化 ---
-user_prompt = "你好，请帮我查询一下今天北京的天气，然后根据天气推荐一个合适的旅游景点。"
+user_prompt = "你好，请帮我查询一下今天长沙的天气，然后根据天气推荐一个合适的旅游景点。"
 prompt_history = [f"用户请求: {user_prompt}"]
 
 print(f"用户输入: {user_prompt}\n" + "="*40)
@@ -167,7 +241,7 @@ for i in range(5): # 设置最大循环次数
     full_prompt = "\n".join(prompt_history)
     
     # 3.2. 调用LLM进行思考
-    llm_output = llm.generate(full_prompt, system_prompt=AGENT_SYSTEM_PROMPT)
+    llm_output = llm.generateFromQwen(full_prompt, system_prompt=AGENT_SYSTEM_PROMPT)
     # 模型可能会输出多余的Thought-Action，需要截断
     match = re.search(r'(Thought:.*?Action:.*?)(?=\n\s*(?:Thought:|Action:|Observation:)|\Z)', llm_output, re.DOTALL)
     if match:
@@ -189,7 +263,7 @@ for i in range(5): # 设置最大循环次数
     action_str = action_match.group(1).strip()
 
     if action_str.startswith("Finish"):
-        final_answer = re.match(r"Finish\[(.*)\]", action_str).group(1)
+        final_answer = re.match(r"Finish\[(.*)\]", action_str, re.DOTALL).group(1)
         print(f"任务完成，最终答案: {final_answer}")
         break
     
