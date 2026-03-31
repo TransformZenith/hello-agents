@@ -167,3 +167,19 @@ AGENTS.md
 
 .vscode/*
 .vscode
+
+
+train_cache/
+*/__pycache__/
+*/.vscode/
+*/.idea/
+*/.pytest_cache/
+*/.mypy_cache/
+*/.dmypy.json
+*/.pytype/
+*/.pyre/
+*/.hypothesis/
+*/.ropeproject/
+*/.spyderproject/
+*/.spyproject/
+*/.ipynb_checkpoints/
