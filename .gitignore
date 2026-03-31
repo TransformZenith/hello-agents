@@ -183,3 +183,4 @@ train_cache/
 */.spyderproject/
 */.spyproject/
 */.ipynb_checkpoints/
+train_origin_data/*
