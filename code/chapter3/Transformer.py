@@ -9,11 +9,12 @@ class MultiHeadAttention(nn.Module):
     """
     def __init__(self, d_model, num_heads):
         super(MultiHeadAttention, self).__init__()
+        # 确保隐藏层维度(如512)能被头数(如8)整除，每个头分到 64 维
         assert d_model % num_heads == 0, "d_model 必须能被 num_heads 整除"
         
-        self.d_model = d_model
-        self.num_heads = num_heads
-        self.d_k = d_model // num_heads
+        self.d_model = d_model # 模型的总特征维度   
+        self.num_heads = num_heads # 头数   
+        self.d_k = d_model // num_heads # 每个头处理的维度大小
         
         # 定义 Q, K, V 和输出的线性变换层
         self.W_q = nn.Linear(d_model, d_model)
@@ -195,8 +196,11 @@ class Decoder(nn.Module):
 class Transformer(nn.Module):
     def __init__(self, src_vocab_size, tgt_vocab_size, d_model, num_layers, num_heads, d_ff, dropout, max_len=5000):
         super(Transformer, self).__init__()
+        # 1. 定义编码器：负责读懂源句子 (比如英文)
         self.encoder = Encoder(src_vocab_size, d_model, num_layers, num_heads, d_ff, dropout, max_len)
+        # 2. 定义解码器：负责生成目标句子 (比如中文)
         self.decoder = Decoder(tgt_vocab_size, d_model, num_layers, num_heads, d_ff, dropout, max_len)
+        # 3. 最后的线性层：把 512 维的向量变成词典大小的概率分布
         self.final_linear = nn.Linear(d_model, tgt_vocab_size)
     
     def generate_mask(self, src, tgt):
